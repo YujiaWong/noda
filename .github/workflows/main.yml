@@ -1,84 +1,37 @@
-name: CI & CD
+# 定义工作流名称
+name: CI/CD Checks
 
+# 在 PR 创建/更新和代码推送时触发
 on:
   pull_request:
+    branches:
+      - dev        # 监控对 dev 分支的 PR
+      - main
   push:
-    branches: [main, dev]
-
+    branches:
+      - dev        # 监控直接推送到 dev 分支
+      - main
 jobs:
-  build-test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+  ci-checks:       # Job的名称，也就是这个流里的一个任务
+    runs-on: ubuntu-latest      # 设置虚拟环境，因为检测，下载依赖模拟运行都是在一个纯净的虚拟环境里运行的
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v4
+      # 检出代码
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      # 设置 Node.js 环境
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
         with:
-          node-version: 20
-          cache: 'npm'
-
+          node-version: '20'
+      # 安装依赖
       - name: Install dependencies
-        run: npm ci
-
-      # 如果没有 lint 脚本，保持注释
-      # - name: Lint code
-      #   run: npm run lint
-
-      # 如果没有 test 脚本，保持注释
-      # - name: Run tests
-      #   run: npm test
-
+        run: npm install
+      # 执行 ESLint 检查
+      - name: Run ESLint
+        run: npm run lint
+      # 构建项目
       - name: Build project
+        env:
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
         run: npm run build
-
-      - name: Upload build artifact
-        if: success() && steps.build_project.outcome == 'success'
-        uses: actions/upload-artifact@v4
-        with:
-          name: build
-          path: .next
-
-  deploy-preview:
-    if: github.event_name == 'pull_request'
-    needs: build-test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: build
-          path: .next
-
-      - name: Deploy Preview to Vercel
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-project-name: noda
-          vercel-args: '--prebuilt'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-  deploy-prod:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: build-test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: build
-          path: .next
-
-      - name: Deploy Production to Vercel
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-project-name: noda
-          vercel-args: '--prebuilt --prod'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
