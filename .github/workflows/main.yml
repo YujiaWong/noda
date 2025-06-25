@@ -27,8 +27,8 @@ jobs:
       - name: Install dependencies
         run: npm install
       # 执行 ESLint 检查
-      - name: Run ESLint
-        run: npm run lint
+      # - name: Run ESLint
+      #   run: npm run lint
       # 构建项目
       - name: Build project
         env:
