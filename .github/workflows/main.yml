@@ -12,19 +12,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node.js environment
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
+          cache: 'npm'
 
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
-      - run: pnpm test
-      - run: pnpm build
+      - name: Install dependencies
+        run: npm ci
 
-      # ✅ 修复：使用 v4 版本
-      - uses: actions/upload-artifact@v4
+      - name: Lint code
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build project
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
         with:
           name: build
           path: .next
@@ -36,7 +43,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # ✅ 修复：使用 v4 版本
       - uses: actions/download-artifact@v4
         with:
           name: build
@@ -59,7 +65,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # ✅ 修复：使用 v4 版本
       - uses: actions/download-artifact@v4
         with:
           name: build
