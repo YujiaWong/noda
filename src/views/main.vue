@@ -2,6 +2,4 @@
   <div id="homepage">homepage</div>
 </template>
 
-<script setup>
-
-</script>
+<script setup></script>
