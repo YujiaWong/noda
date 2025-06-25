@@ -1,7 +1,5 @@
 <template>
-  <div id="homepage">homepage</div>
+  <div id="homepage">homepage1123213</div>
 </template>
 
-<script setup>
-
-</script>
+<script setup></script>
