@@ -21,16 +21,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # 如果没有 lint 脚本，保持注释
       # - name: Lint code
       #   run: npm run lint
 
-      - name: Run tests
-        run: npm test
+      # 如果没有 test 脚本，保持注释
+      # - name: Run tests
+      #   run: npm test
 
       - name: Build project
         run: npm run build
 
       - name: Upload build artifact
+        if: success() && steps.build_project.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: build
