@@ -1,0 +1,76 @@
+name: CI & CD
+
+on:
+  pull_request:
+  push:
+    branches: [main, dev]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm build
+
+      # ✅ 修复：使用 v4 版本
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: .next
+
+  deploy-preview:
+    if: github.event_name == 'pull_request'
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # ✅ 修复：使用 v4 版本
+      - uses: actions/download-artifact@v4
+        with:
+          name: build
+          path: .next
+
+      - name: Deploy Preview to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-project-name: noda
+          vercel-args: '--prebuilt'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy-prod:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # ✅ 修复：使用 v4 版本
+      - uses: actions/download-artifact@v4
+        with:
+          name: build
+          path: .next
+
+      - name: Deploy Production to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-project-name: noda
+          vercel-args: '--prebuilt --prod'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
